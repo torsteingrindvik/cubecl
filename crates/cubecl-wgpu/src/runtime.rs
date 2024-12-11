@@ -7,7 +7,7 @@ use crate::{
 };
 use alloc::sync::Arc;
 use cubecl_common::future;
-use cubecl_core::{Feature, Runtime};
+use cubecl_core::{server::ComputeServer, Feature, Runtime};
 pub use cubecl_runtime::memory_management::MemoryConfiguration;
 use cubecl_runtime::{channel::MutexComputeChannel, client::ComputeClient, ComputeRuntime};
 use cubecl_runtime::{memory_management::HardwareProperties, DeviceProperties};
@@ -130,6 +130,29 @@ pub fn init_device(setup: WgpuSetup, options: RuntimeOptions) -> WgpuDevice {
     let client = create_client_on_setup(setup, options);
     RUNTIME.register(&device_id, client);
     device_id
+}
+
+pub fn init_device_give_client(
+    setup: WgpuSetup,
+    options: RuntimeOptions,
+) -> (
+    WgpuDevice,
+    ComputeClient<WgpuServer<WgslCompiler>, MutexComputeChannel<WgpuServer<WgslCompiler>>>,
+) {
+    use core::sync::atomic::{AtomicU32, Ordering};
+
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    let device_id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    if device_id == u32::MAX {
+        core::panic!("Memory ID overflowed");
+    }
+
+    let device_id = WgpuDevice::Existing(device_id);
+    let client = create_client_on_setup(setup, options);
+
+    RUNTIME.register(&device_id, client.clone());
+    (device_id, client)
 }
 
 /// Like [`init_setup_async`], but synchronous.

@@ -219,6 +219,7 @@ impl<C: WgpuCompiler> ComputeServer for WgpuServer<C> {
             }
         }
 
+        let kname = kernel.name();
         // Start execution.
         let pipeline = self.pipeline(kernel, mode);
 

@@ -88,7 +88,7 @@ impl WgpuStream {
 
             self.encoder
                 .begin_compute_pass(&wgpu::ComputePassDescriptor {
-                    label: None,
+                    label: Some("label 13"),
                     timestamp_writes: timestamps,
                 })
                 .forget_lifetime()
@@ -107,7 +107,7 @@ impl WgpuStream {
 
         let group_layout = pipeline.get_bind_group_layout(0);
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
+            label: Some("label 14"),
             layout: &group_layout,
             entries,
         });
@@ -117,6 +117,7 @@ impl WgpuStream {
 
         match dispatch {
             PipelineDispatch::Static(x, y, z) => {
+                pass.insert_debug_marker("This thang");
                 pass.dispatch_workgroups(x, y, z);
             }
             PipelineDispatch::Dynamic(binding_resource) => {
@@ -150,7 +151,7 @@ impl WgpuStream {
             let aligned_len = size.div_ceil(align) * align;
 
             let staging_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-                label: None,
+                label: Some("label 15"),
                 size: aligned_len,
                 usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
@@ -240,7 +241,7 @@ impl WgpuStream {
                 } else {
                     let size = 2 * size_of::<u64>() as u64;
                     let resolved = self.device.create_buffer(&wgpu::BufferDescriptor {
-                        label: None,
+                        label: Some("label 16"),
                         size,
                         usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::QUERY_RESOLVE,
                         mapped_at_creation: false,
@@ -334,8 +335,9 @@ impl WgpuStream {
         self.pass = None;
 
         let new_encoder = create_encoder(&self.device);
-        let encoder = std::mem::replace(&mut self.encoder, new_encoder);
+        let mut encoder = std::mem::replace(&mut self.encoder, new_encoder);
 
+        encoder.insert_debug_marker("Happy guy");
         let index = self.queue.submit([encoder.finish()]);
 
         self.submission_load

@@ -28,7 +28,7 @@ use wgpu::{
 
 use crate::{
     create_client_on_setup, create_setup_for_device, RuntimeOptions, Vulkan, WgpuDevice,
-    WgpuRuntime, WgpuServer,
+    WgpuRuntime, WgpuServer, WgpuSetup,
 };
 
 use super::base::WgpuCompiler;
@@ -76,13 +76,13 @@ impl WgpuCompiler for SpirvCompiler<GLCompute> {
                 let layout = server
                     .device
                     .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                        label: None,
+                        label: Some("label 1"),
                         entries: &bindings,
                     });
                 let layout = server
                     .device
                     .create_pipeline_layout(&PipelineLayoutDescriptor {
-                        label: None,
+                        label: Some("label 2"),
                         bind_group_layouts: &[&layout],
                         push_constant_ranges: &[],
                     });
@@ -93,7 +93,7 @@ impl WgpuCompiler for SpirvCompiler<GLCompute> {
                     server
                         .device
                         .create_shader_module_spirv(&ShaderModuleDescriptorSpirV {
-                            label: None,
+                            label: Some("label 3"),
                             source: Cow::Borrowed(&spirv),
                         })
                 };
@@ -112,7 +112,7 @@ impl WgpuCompiler for SpirvCompiler<GLCompute> {
                     server
                         .device
                         .create_shader_module_unchecked(wgpu::ShaderModuleDescriptor {
-                            label: None,
+                            label: Some("label 4"),
                             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(source)),
                         })
                 };
@@ -123,7 +123,7 @@ impl WgpuCompiler for SpirvCompiler<GLCompute> {
             server
                 .device
                 .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    label: None,
+                    label: Some("label 5"),
                     layout: layout.as_ref(),
                     module: &module,
                     entry_point: Some(&kernel.entrypoint_name),
@@ -291,7 +291,7 @@ fn request_device(
     };
 
     let descriptor = DeviceDescriptor {
-        label: None,
+        label: Some("label 6"),
         required_features: features,
         required_limits: limits,
         // The default is MemoryHints::Performance, which tries to do some bigger
@@ -396,6 +396,29 @@ impl Runtime for WgpuRuntime<VkSpirvCompiler> {
         let max_dim = u16::MAX as u32;
         (max_dim, max_dim, max_dim)
     }
+}
+
+pub fn init_device_give_client(
+    setup: WgpuSetup,
+    options: RuntimeOptions,
+) -> (
+    WgpuDevice,
+    ComputeClient<WgpuServer<SpirvCompiler>, MutexComputeChannel<WgpuServer<SpirvCompiler>>>,
+) {
+    use core::sync::atomic::{AtomicU32, Ordering};
+
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    let device_id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    if device_id == u32::MAX {
+        core::panic!("Memory ID overflowed");
+    }
+
+    let device_id = WgpuDevice::Existing(device_id);
+    let client = create_client_on_setup(setup, options);
+
+    RUNTIME.register(&device_id, client.clone());
+    (device_id, client)
 }
 
 #[cfg(feature = "spirv-dump")]

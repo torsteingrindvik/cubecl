@@ -104,7 +104,7 @@ impl WgpuCompiler for WgslCompiler {
             server
                 .device
                 .create_shader_module_unchecked(ShaderModuleDescriptor {
-                    label: None,
+                    label: Some("label 7"),
                     source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(source)),
                 })
         };
@@ -139,13 +139,13 @@ impl WgpuCompiler for WgslCompiler {
             let layout = server
                 .device
                 .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                    label: None,
+                    label: Some("label 8"),
                     entries: &bindings,
                 });
             server
                 .device
                 .create_pipeline_layout(&PipelineLayoutDescriptor {
-                    label: None,
+                    label: Some("label 9"),
                     bind_group_layouts: &[&layout],
                     push_constant_ranges: &[],
                 })
@@ -155,7 +155,7 @@ impl WgpuCompiler for WgslCompiler {
             server
                 .device
                 .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    label: None,
+                    label: Some("label 10"),
                     layout: layout.as_ref(),
                     module: &module,
                     entry_point: Some(&kernel.entrypoint_name),
@@ -181,7 +181,7 @@ impl WgpuCompiler for WgslCompiler {
         adapter
             .request_device(
                 &DeviceDescriptor {
-                    label: None,
+                    label: Some("label 11"),
                     required_features: adapter.features(),
                     required_limits: limits,
                     // The default is MemoryHints::Performance, which tries to do some bigger
