@@ -122,6 +122,18 @@ pub struct WgpuSetup {
 /// This function generates a new, globally unique ID for the device every time it is called,
 /// even if called on the same device multiple times.
 pub fn init_device(setup: WgpuSetup, options: RuntimeOptions) -> WgpuDevice {
+    init_device_ret_client(setup, options).0
+}
+
+/// See [`init_device`].
+/// Same API but returns the client.
+pub fn init_device_ret_client(
+    setup: WgpuSetup,
+    options: RuntimeOptions,
+) -> (
+    WgpuDevice,
+    ComputeClient<WgpuServer<WgslCompiler>, MutexComputeChannel<WgpuServer<WgslCompiler>>>,
+) {
     use core::sync::atomic::{AtomicU32, Ordering};
 
     static COUNTER: AtomicU32 = AtomicU32::new(0);
@@ -133,8 +145,9 @@ pub fn init_device(setup: WgpuSetup, options: RuntimeOptions) -> WgpuDevice {
 
     let device_id = WgpuDevice::Existing(device_id);
     let client = create_client_on_setup(setup, options);
-    RUNTIME.register(&device_id, client);
-    device_id
+
+    RUNTIME.register(&device_id, client.clone());
+    (device_id, client)
 }
 
 /// Like [`init_setup_async`], but synchronous.

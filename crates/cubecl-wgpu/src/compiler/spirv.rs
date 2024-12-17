@@ -28,7 +28,7 @@ use wgpu::{
 
 use crate::{
     create_client_on_setup, create_setup_for_device, RuntimeOptions, Vulkan, WgpuDevice,
-    WgpuRuntime, WgpuServer,
+    WgpuRuntime, WgpuServer, WgpuSetup,
 };
 
 use super::base::WgpuCompiler;
@@ -396,6 +396,29 @@ impl Runtime for WgpuRuntime<VkSpirvCompiler> {
         let max_dim = u16::MAX as u32;
         (max_dim, max_dim, max_dim)
     }
+}
+
+pub fn init_device_give_client(
+    setup: WgpuSetup,
+    options: RuntimeOptions,
+) -> (
+    WgpuDevice,
+    ComputeClient<WgpuServer<SpirvCompiler>, MutexComputeChannel<WgpuServer<SpirvCompiler>>>,
+) {
+    use core::sync::atomic::{AtomicU32, Ordering};
+
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    let device_id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    if device_id == u32::MAX {
+        core::panic!("Memory ID overflowed");
+    }
+
+    let device_id = WgpuDevice::Existing(device_id);
+    let client = create_client_on_setup(setup, options);
+
+    RUNTIME.register(&device_id, client.clone());
+    (device_id, client)
 }
 
 #[cfg(feature = "spirv-dump")]
