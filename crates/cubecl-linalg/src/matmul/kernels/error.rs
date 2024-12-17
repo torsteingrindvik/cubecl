@@ -7,10 +7,6 @@ pub enum MatmulLaunchError {
 }
 
 pub enum MatmulAvailabilityError {
-    PlaneDimUnknown,
-    PlaneDimUnsupported {
-        plane_dim: u32,
-    },
     PlaneOperationsUnavailable,
     TypesUnavailable {
         input: Elem,
@@ -107,12 +103,6 @@ impl Debug for MatmulAvailabilityError {
             MatmulAvailabilityError::PlaneOperationsUnavailable => {
                 writeln!(f, "Plane operations not supported.")
             }
-            MatmulAvailabilityError::PlaneDimUnknown => {
-                writeln!(f, "Plane dimension unknown.")
-            },
-            MatmulAvailabilityError::PlaneDimUnsupported{plane_dim} => {
-                writeln!(f, "Plane dimension unsupported: {plane_dim}. Only 32 & 64 are supported.")
-            },
             MatmulAvailabilityError::TypesUnavailable { input, output } => {
                 writeln!(
                     f,

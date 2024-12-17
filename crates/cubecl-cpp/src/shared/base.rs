@@ -935,7 +935,6 @@ impl<D: Dialect> CppCompiler<D> {
         Binding {
             item: self.compile_item(binding.item),
             size: binding.size,
-            vis: binding.visibility,
         }
     }
 

@@ -189,13 +189,7 @@ pub mod wmma_api_base {
     ) -> std::fmt::Result {
         let elem = match fragment.elem {
             Elem::TF32 => format!("{namespace}::precision::tf32"),
-            Elem::BF16 => {
-                if fragment.ident == FragmentIdent::Accumulator {
-                    format!("{}", Elem::<D>::F16) // Normally not supported except for cast.
-                } else {
-                    format!("{}", fragment.elem)
-                }
-            }
+            Elem::BF16 => format!("{}", Elem::<D>::F16), // Normally not supported except for cast.
             elem => format!("{elem}"),
         };
         match fragment.layout {
